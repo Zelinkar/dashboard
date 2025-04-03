@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .widget {
+            background: lightgray;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            min-width: 100px;
+        }
+        .widget button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dashboard</h1>
+    <button onclick="addWidget()">Add Widget</button>
+    <div id="dashboard"></div>
+    
+    <script>
+        function loadWidgets() {
+            const dashboard = document.getElementById('dashboard');
+            dashboard.innerHTML = '';
+            const widgets = JSON.parse(localStorage.getItem('widgets')) || [];
+            widgets.forEach((widget, index) => {
+                const widgetDiv = document.createElement('div');
+                widgetDiv.classList.add('widget');
+                widgetDiv.innerHTML = `<p>${widget.type}</p><div id="widget-content-${index}"></div><button onclick="removeWidget(${index})">Remove</button>`;
+                dashboard.appendChild(widgetDiv);
+                
+                if (widget.type === 'Time') {
+                    updateTime(index);
+                    setInterval(() => updateTime(index), 1000);
+                } else if (widget.type === 'Weather') {
+                    fetchWeather(index);
+                } else if (widget.type === 'Exchange Rate') {
+                    fetchExchangeRates(index);
+                }
+            });
+        }
+
+        function updateTime(index) {
+            document.getElementById(`widget-content-${index}`).innerText = new Date().toLocaleTimeString();
+        }
+
+        function fetchWeather(index) {
+            document.getElementById(`widget-content-${index}`).innerText = 'Loading...';
+            fetch('https://api.open-meteo.com/v1/forecast?latitude=50.08&longitude=14.42&current=temperature_2m')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById(`widget-content-${index}`).innerText = `${data.current.temperature_2m}°C`;
+                })
+                .catch(() => document.getElementById(`widget-content-${index}`).innerText = 'Failed to load');
+        }
+
+        function fetchExchangeRates(index) {
+            document.getElementById(`widget-content-${index}`).innerText = 'Loading...';
+            fetch('https://api.exchangerate-api.com/v4/latest/USD')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById(`widget-content-${index}`).innerText = `CZK: ${data.rates.CZK}, BTC: ${data.rates.BTC || 'N/A'}`;
+                })
+                .catch(() => document.getElementById(`widget-content-${index}`).innerText = 'Failed to load');
+        }
+
+        function addWidget() {
+            const widgetType = prompt('Enter widget type (Time, Weather, Exchange Rate):');
+            if (widgetType && ['Time', 'Weather', 'Exchange Rate'].includes(widgetType)) {
+                const widgets = JSON.parse(localStorage.getItem('widgets')) || [];
+                widgets.push({ type: widgetType });
+                localStorage.setItem('widgets', JSON.stringify(widgets));
+                loadWidgets();
+            }
+        }
+
+        function removeWidget(index) {
+            let widgets = JSON.parse(localStorage.getItem('widgets')) || [];
+            widgets.splice(index, 1);
+            localStorage.setItem('widgets', JSON.stringify(widgets));
+            loadWidgets();
+        }
+
+        loadWidgets();
+    </script>
+</body>
+</html>
