@@ -8,99 +8,74 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             display: flex;
-            flex-direction: column;
-            align-items: center;
         }
-        #dashboard {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            width: 100%;
-            max-width: 600px;
-        }
-        .widget {
-            background: lightgray;
+        .sidebar {
+            width: 250px;
+            background: #333;
+            color: white;
+            height: 100vh;
             padding: 20px;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar li {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .sidebar li:hover {
+            background: #555;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+        .card {
+            background: #f4f4f4;
+            padding: 20px;
+            margin-bottom: 20px;
             border-radius: 5px;
-            text-align: center;
-            min-width: 100px;
-        }
-        .widget button {
-            margin-top: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 <body>
-    <h1>Dashboard</h1>
-    <button onclick="addWidget()">Add Widget</button>
-    <div id="dashboard"></div>
-    
+    <div class="sidebar">
+        <h2>Dashboard</h2>
+        <ul>
+            <li onclick="showContent('home')">Home</li>
+            <li onclick="showContent('reports')">Reports</li>
+            <li onclick="showContent('settings')">Settings</li>
+        </ul>
+    </div>
+    <div class="content" id="main-content">
+        <h1>Welcome to the Dashboard</h1>
+        <div class="card">Dashboard Overview</div>
+        <div class="card">Recent Activity</div>
+    </div>
+
     <script>
-        function loadWidgets() {
-            const dashboard = document.getElementById('dashboard');
-            dashboard.innerHTML = '';
-            const widgets = JSON.parse(localStorage.getItem('widgets')) || [];
-            widgets.forEach((widget, index) => {
-                const widgetDiv = document.createElement('div');
-                widgetDiv.classList.add('widget');
-                widgetDiv.innerHTML = `<p>${widget.type}</p><div id="widget-content-${index}"></div><button onclick="removeWidget(${index})">Remove</button>`;
-                dashboard.appendChild(widgetDiv);
-                
-                if (widget.type === 'Time') {
-                    updateTime(index);
-                    setInterval(() => updateTime(index), 1000);
-                } else if (widget.type === 'Weather') {
-                    fetchWeather(index);
-                } else if (widget.type === 'Exchange Rate') {
-                    fetchExchangeRates(index);
-                }
-            });
-        }
-
-        function updateTime(index) {
-            document.getElementById(`widget-content-${index}`).innerText = new Date().toLocaleTimeString();
-        }
-
-        function fetchWeather(index) {
-            document.getElementById(`widget-content-${index}`).innerText = 'Loading...';
-            fetch('https://api.open-meteo.com/v1/forecast?latitude=50.08&longitude=14.42&current=temperature_2m')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById(`widget-content-${index}`).innerText = `${data.current.temperature_2m}°C`;
-                })
-                .catch(() => document.getElementById(`widget-content-${index}`).innerText = 'Failed to load');
-        }
-
-        function fetchExchangeRates(index) {
-            document.getElementById(`widget-content-${index}`).innerText = 'Loading...';
-            fetch('https://api.exchangerate-api.com/v4/latest/USD')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById(`widget-content-${index}`).innerText = `CZK: ${data.rates.CZK}, BTC: ${data.rates.BTC || 'N/A'}`;
-                })
-                .catch(() => document.getElementById(`widget-content-${index}`).innerText = 'Failed to load');
-        }
-
-        function addWidget() {
-            const widgetType = prompt('Enter widget type (Time, Weather, Exchange Rate):');
-            if (widgetType && ['Time', 'Weather', 'Exchange Rate'].includes(widgetType)) {
-                const widgets = JSON.parse(localStorage.getItem('widgets')) || [];
-                widgets.push({ type: widgetType });
-                localStorage.setItem('widgets', JSON.stringify(widgets));
-                loadWidgets();
+        function showContent(section) {
+            const content = document.getElementById("main-content");
+            let html = "";
+            
+            switch (section) {
+                case "home":
+                    html = `<h1>Home</h1><div class='card'>Welcome to the home page</div>`;
+                    break;
+                case "reports":
+                    html = `<h1>Reports</h1><div class='card'>Here are your reports</div>`;
+                    break;
+                case "settings":
+                    html = `<h1>Settings</h1><div class='card'>Adjust your settings here</div>`;
+                    break;
             }
+            
+            content.innerHTML = html;
         }
-
-        function removeWidget(index) {
-            let widgets = JSON.parse(localStorage.getItem('widgets')) || [];
-            widgets.splice(index, 1);
-            localStorage.setItem('widgets', JSON.stringify(widgets));
-            loadWidgets();
-        }
-
-        loadWidgets();
     </script>
 </body>
 </html>
